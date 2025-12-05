@@ -15,13 +15,19 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.SET_NULL
         )
     ],
-    indices = [Index("categoryId")]
+    indices = [Index("categoryId"), Index("userId")]
 )
 data class TransactionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val cloudId: String? = null,
+    val syncStatus: String = "SYNCED",
+    val lastModified: Long = System.currentTimeMillis(),
+    val userId: String = "local_user", // User ID from Firebase Auth
     val amount: Double,
     val date: Long, // Timestamp
     val description: String,
     val categoryId: Long?,
     val type: String // "INCOME" or "EXPENSE"
 )
+
+

@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CategoryDao {
-    @Query("SELECT * FROM categories")
-    fun getAllCategories(): Flow<List<CategoryEntity>>
+    @Query("SELECT * FROM categories WHERE userId = :userId")
+    fun getAllCategories(userId: String): Flow<List<CategoryEntity>>
 
     @Query("SELECT * FROM categories WHERE id = :id")
     suspend fun getCategoryById(id: Long): CategoryEntity?
@@ -25,4 +25,14 @@ interface CategoryDao {
 
     @Delete
     suspend fun deleteCategory(category: CategoryEntity)
+
+    // Sync queries
+    @Query("SELECT * FROM categories WHERE userId = :userId AND syncStatus != 'SYNCED'")
+    suspend fun getPendingSyncCategories(userId: String): List<CategoryEntity>
+
+    @Query("UPDATE categories SET syncStatus = :status, lastModified = :timestamp WHERE id = :id")
+    suspend fun updateSyncStatus(id: Long, status: String, timestamp: Long = System.currentTimeMillis())
+
+    @Query("UPDATE categories SET cloudId = :cloudId, syncStatus = 'SYNCED', lastModified = :timestamp WHERE id = :id")
+    suspend fun updateCloudId(id: Long, cloudId: String, timestamp: Long = System.currentTimeMillis())
 }

@@ -15,12 +15,18 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("categoryId")]
+    indices = [Index("categoryId"), Index("userId")]
 )
 data class BudgetEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val cloudId: String? = null,
+    val syncStatus: String = "SYNCED",
+    val lastModified: Long = System.currentTimeMillis(),
+    val userId: String = "local_user", // User ID from Firebase Auth
     val categoryId: Long,
     val amount: Double,
     val month: Int,
     val year: Int
 )
+
+

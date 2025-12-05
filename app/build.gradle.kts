@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -56,6 +57,8 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
 
     // Room
     implementation(libs.androidx.room.runtime)
@@ -82,6 +85,14 @@ dependencies {
 
     // Google AI (Fallback)
     implementation(libs.generativeai)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
+
+    // WorkManager
+    implementation(libs.androidx.work.runtime)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

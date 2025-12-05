@@ -15,7 +15,7 @@ import com.example.gestor_money.data.local.entities.TransactionEntity
         TransactionEntity::class,
         BudgetEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

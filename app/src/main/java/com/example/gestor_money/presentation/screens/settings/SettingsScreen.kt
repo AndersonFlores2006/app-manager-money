@@ -17,12 +17,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.gestor_money.BuildConfig
+import com.example.gestor_money.presentation.screens.auth.AuthViewModel
 import java.io.File
 
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -156,6 +158,37 @@ fun SettingsScreen(
             }
         }
 
+        // Account Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Cuenta",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Button(
+                    onClick = { authViewModel.signOut() },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(Icons.Default.ExitToApp, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cerrar Sesión")
+                }
+            }
+        }
+
         // About Section
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -172,13 +205,13 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                
+
                 SettingItem(
                     icon = Icons.Default.Info,
                     title = "Versión",
                     value = "1.0.0"
                 )
-                
+
                 SettingItem(
                     icon = Icons.Default.Code,
                     title = "Tecnología",
