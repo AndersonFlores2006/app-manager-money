@@ -1,6 +1,9 @@
 package com.example.gestor_money.presentation.screens.settings
 
 import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -11,10 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.gestor_money.BuildConfig
+import java.io.File
 
 @Composable
 fun SettingsScreen(
@@ -24,16 +27,31 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Handle export success
-    LaunchedEffect(uiState.exportedUri) {
-        uiState.exportedUri?.let { uri ->
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri: Uri? ->
+        uri?.let { destUri ->
+            uiState.exportedFile?.let { sourceFile ->
+                try {
+                    context.contentResolver.openOutputStream(destUri)?.use { output ->
+                        sourceFile.inputStream().use { input ->
+                            input.copyTo(output)
+                        }
+                    }
+                    // Optionally show success message
+                } catch (e: Exception) {
+                    // Optionally show error message
+                }
             }
-            context.startActivity(Intent.createChooser(intent, "Compartir Excel"))
-            viewModel.clearExportStatus()
+        }
+        viewModel.clearExportStatus()
+    }
+
+    // Handle export success
+    LaunchedEffect(uiState.exportedFile) {
+        uiState.exportedFile?.let { file ->
+            val fileName = "transacciones_${System.currentTimeMillis()}.pdf"
+            createDocumentLauncher.launch(fileName)
         }
     }
 
@@ -66,7 +84,7 @@ fun SettingsScreen(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "Exporta todas tus transacciones a un archivo Excel",
+                    text = "Exporta todas tus transacciones a un archivo PDF",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -87,7 +105,7 @@ fun SettingsScreen(
                     } else {
                         Icon(Icons.Default.Download, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Exportar a Excel")
+                        Text("Exportar a PDF")
                     }
                 }
 

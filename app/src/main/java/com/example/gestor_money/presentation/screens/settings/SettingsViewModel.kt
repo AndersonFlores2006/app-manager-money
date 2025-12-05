@@ -1,6 +1,5 @@
 package com.example.gestor_money.presentation.screens.settings
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gestor_money.domain.usecase.ExportToExcelUseCase
@@ -9,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,10 +24,10 @@ class SettingsViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isExporting = true, exportError = null)
             
             exportToExcelUseCase().fold(
-                onSuccess = { uri ->
+                onSuccess = { file ->
                     _uiState.value = _uiState.value.copy(
                         isExporting = false,
-                        exportedUri = uri,
+                        exportedFile = file,
                         exportSuccess = true
                     )
                 },
@@ -45,7 +45,7 @@ class SettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(
             exportSuccess = false,
             exportError = null,
-            exportedUri = null
+            exportedFile = null
         )
     }
 }
@@ -54,5 +54,5 @@ data class SettingsUiState(
     val isExporting: Boolean = false,
     val exportSuccess: Boolean = false,
     val exportError: String? = null,
-    val exportedUri: Uri? = null
+    val exportedFile: File? = null
 )
