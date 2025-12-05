@@ -7,6 +7,20 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+import java.util.Properties
+import java.io.File
+
+// Leer variables del archivo .env
+val envFile = rootProject.file(".env")
+val envProperties = Properties()
+if (envFile.exists()) {
+    envProperties.load(envFile.inputStream())
+}
+
+fun getEnvProperty(key: String, default: String = ""): String {
+    return envProperties.getProperty(key, default)
+}
+
 android {
     namespace = "com.example.gestor_money"
     compileSdk = 35
@@ -19,6 +33,12 @@ android {
         versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Pasar credenciales desde .env a BuildConfig
+        buildConfigField("String", "OLLAMA_API_KEY", "\"${getEnvProperty("OLLAMA_API_KEY")}\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"${getEnvProperty("GEMINI_API_KEY")}\"")
+        buildConfigField("String", "OLLAMA_BASE_URL", "\"https://api.ollama.ai/\"")
+        buildConfigField("String", "GEMINI_BASE_URL", "\"https://generativelanguage.googleapis.com/\"")
     }
 
     buildTypes {
@@ -39,6 +59,11 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+
+    lint {
+        disable += "RemoveWorkManagerInitializer"
     }
 }
 

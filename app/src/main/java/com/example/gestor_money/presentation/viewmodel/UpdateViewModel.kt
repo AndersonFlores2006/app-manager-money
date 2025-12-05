@@ -20,7 +20,7 @@ import javax.inject.Inject
 data class UpdateUiState(
     val isChecking: Boolean = false,
     val updateAvailable: Boolean = false,
-    val currentVersion: String = BuildConfig.VERSION_NAME,
+    val currentVersion: String = "",
     val latestVersion: String = "",
     val latestVersionCode: String = "",
     val isDownloading: Boolean = false,
@@ -35,7 +35,7 @@ class UpdateViewModel @Inject constructor(
     private val updateRepository: UpdateRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(UpdateUiState())
+    private val _uiState = MutableStateFlow(UpdateUiState(currentVersion = "1.1.0"))
     val uiState: StateFlow<UpdateUiState> = _uiState.asStateFlow()
 
     fun checkForUpdates() {
@@ -44,7 +44,7 @@ class UpdateViewModel @Inject constructor(
             
             updateRepository.getLatestRelease().onSuccess { release ->
                 val latestVersion = release.tag_name.removePrefix("v")
-                val currentVersion = BuildConfig.VERSION_NAME
+                val currentVersion = "1.1.0"
                 
                 val updateAvailable = compareVersions(latestVersion, currentVersion) > 0
                 

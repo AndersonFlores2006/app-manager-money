@@ -30,7 +30,14 @@ fun UpdateDialog(
             AlertDialog(
                 onDismissRequest = onDismiss,
                 title = { Text("Verificando actualizaciones...") },
-                text = { CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally)) },
+                text = {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                },
                 confirmButton = {}
             )
         }
