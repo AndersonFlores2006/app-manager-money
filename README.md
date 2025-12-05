@@ -2,6 +2,10 @@
 
 Una aplicación Android para gestionar tus finanzas personales de manera eficiente.
 
+## Autor
+
+Anderson Flores
+
 ## Características Principales
 
 *   **Seguimiento de Transacciones:** Registra tus gastos e ingresos de forma detallada.

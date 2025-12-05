@@ -217,6 +217,12 @@ fun SettingsScreen(
                     title = "Tecnología",
                     value = "Kotlin + Jetpack Compose"
                 )
+
+                SettingItem(
+                    icon = Icons.Default.Person,
+                    title = "Autor",
+                    value = "Anderson Flores"
+                )
             }
         }
     }

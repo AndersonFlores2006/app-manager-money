@@ -3,16 +3,19 @@ package com.example.gestor_money.presentation.screens.chat.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gestor_money.data.ai.AiRepository
+import com.example.gestor_money.data.repository.ChatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val aiRepository: AiRepository
+    private val aiRepository: AiRepository,
+    private val chatRepository: ChatRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -98,7 +101,12 @@ class ChatViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(currentInput = input)
     }
 
-    fun clearChat() {
+    suspend fun loadHistory() {
+        val messages = chatRepository.getAllMessages().first()
+        _uiState.value = _uiState.value.copy(messages = messages)
+    }
+
+    suspend fun clearChat() {
         aiRepository.clearHistory()
         _uiState.value = ChatUiState()
     }

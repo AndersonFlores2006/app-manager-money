@@ -7,6 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.gestor_money.data.local.AppDatabase
 import com.example.gestor_money.data.local.dao.BudgetDao
 import com.example.gestor_money.data.local.dao.CategoryDao
+import com.example.gestor_money.data.local.dao.ChatDao
 import com.example.gestor_money.data.local.dao.TransactionDao
 import dagger.Module
 import dagger.Provides
@@ -79,5 +80,10 @@ object DatabaseModule {
     @Provides
     fun provideBudgetDao(database: AppDatabase): BudgetDao {
         return database.budgetDao()
+    }
+
+    @Provides
+    fun provideChatDao(database: AppDatabase): ChatDao {
+        return database.chatDao()
     }
 }

@@ -2,6 +2,7 @@ package com.example.gestor_money.data.repository
 
 import com.example.gestor_money.data.local.entities.BudgetEntity
 import com.example.gestor_money.data.local.entities.CategoryEntity
+import com.example.gestor_money.data.local.entities.ChatMessageEntity
 import com.example.gestor_money.data.local.entities.TransactionEntity
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -165,6 +166,54 @@ class FirestoreRepository @Inject constructor(
             firestore.collection("users")
                 .document(userId)
                 .collection("budgets")
+                .document(cloudId)
+                .delete()
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ============ Chat Messages ============
+
+    suspend fun syncChatMessage(userId: String, message: ChatMessageEntity): Result<String> {
+        return try {
+            val data = hashMapOf(
+                "role" to message.role,
+                "content" to message.content,
+                "timestamp" to message.timestamp,
+                "isError" to message.isError,
+                "lastModified" to message.lastModified
+            )
+
+            val docRef = if (message.cloudId != null) {
+                // Update existing document
+                firestore.collection("users")
+                    .document(userId)
+                    .collection("chat_messages")
+                    .document(message.cloudId!!)
+                    .also { it.set(data).await() }
+            } else {
+                // Create new document
+                firestore.collection("users")
+                    .document(userId)
+                    .collection("chat_messages")
+                    .add(data)
+                    .await()
+            }
+
+            Result.success(docRef.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteChatMessage(userId: String, cloudId: String): Result<Unit> {
+        return try {
+            firestore.collection("users")
+                .document(userId)
+                .collection("chat_messages")
                 .document(cloudId)
                 .delete()
                 .await()

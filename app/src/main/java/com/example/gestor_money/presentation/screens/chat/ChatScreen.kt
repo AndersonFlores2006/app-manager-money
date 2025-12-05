@@ -31,6 +31,11 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
+    // Load history on start
+    LaunchedEffect(Unit) {
+        viewModel.loadHistory()
+    }
+
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(uiState.messages.size) {
         if (uiState.messages.isNotEmpty()) {
@@ -54,7 +59,7 @@ fun ChatScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.clearChat() }) {
+                    IconButton(onClick = { coroutineScope.launch { viewModel.clearChat() } }) {
                         Icon(Icons.Default.Delete, contentDescription = "Limpiar chat")
                     }
                 }
