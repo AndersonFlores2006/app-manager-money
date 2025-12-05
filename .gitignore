@@ -75,3 +75,5 @@ build/play-asset-delivery/
 
 # Android Studio Dolphin .idea file
 .idea/appInsightsSettings.xml
+
+.env
