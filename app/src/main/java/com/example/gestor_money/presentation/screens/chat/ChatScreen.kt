@@ -1,13 +1,14 @@
 package com.example.gestor_money.presentation.screens.chat
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,189 +16,203 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.example.gestor_money.presentation.screens.chat.viewmodel.ChatMessage
 import com.example.gestor_money.presentation.screens.chat.viewmodel.ChatViewModel
-import java.text.SimpleDateFormat
-import java.util.*
+import com.example.gestor_money.presentation.theme.Error
+import com.example.gestor_money.presentation.theme.Success
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    navController: NavController,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(uiState.messages.size) {
         if (uiState.messages.isNotEmpty()) {
-            listState.animateScrollToItem(uiState.messages.size - 1)
+            coroutineScope.launch {
+                listState.animateScrollToItem(uiState.messages.size - 1)
+            }
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Asistente IA",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text("Asistente IA")
+                        Text(
+                            text = "Powered by Qwen2.5-7B", // Mantener el modelo de Qwen para el título si es necesario
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.clearChat() }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Limpiar chat")
+                    }
+                }
             )
-            
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Investment advice button
-                IconButton(
-                    onClick = { viewModel.getInvestmentAdvice() },
-                    enabled = !uiState.isLoading
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.TrendingUp,
-                        contentDescription = "Consejos de inversión",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-                
-                // Clear chat button
-                IconButton(
-                    onClick = { viewModel.clearChat() },
-                    enabled = uiState.messages.isNotEmpty()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Limpiar chat",
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Messages list
-        LazyColumn(
+    ) { padding ->
+        Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .fillMaxSize()
+                .padding(padding)
         ) {
+            // Quick Actions
             if (uiState.messages.isEmpty()) {
-                item {
-                    EmptyStateMessage()
+                QuickActions(
+                    onInvestmentAdvice = { viewModel.getInvestmentAdvice() },
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+
+            // Messages List
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                state = listState,
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (uiState.messages.isEmpty()) {
+                    item {
+                        WelcomeMessage()
+                    }
                 }
-            } else {
-                items(uiState.messages) { message ->
-                    MessageBubble(message = message)
+
+                items(uiState.messages) {
+                    MessageBubble(message = it)
+                    // Add model name below user's message, but only if it's an AI response and not an error
+                    if (!it.isUser && !it.isError) {
+                        Text(
+                            text = "(Respuesta de Gemini 2.0 Flash)", // Indicando el modelo usado
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+                        )
+                    }
+                }
+
+                if (uiState.isLoading) {
+                    item {
+                        LoadingIndicator()
+                    }
                 }
             }
 
-            // Loading indicator
-            if (uiState.isLoading) {
-                item {
-                    LoadingIndicator()
-                }
-            }
+            // Input Area
+            MessageInput(
+                value = uiState.currentInput,
+                onValueChange = { viewModel.updateInput(it) },
+                onSend = {
+                    viewModel.sendMessage(uiState.currentInput)
+                },
+                isSending = uiState.isLoading,
+                modifier = Modifier.padding(16.dp)
+            )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Input field
-        MessageInputField(
-            value = uiState.currentInput,
-            onValueChange = { viewModel.updateInput(it) },
-            onSend = { 
-                viewModel.sendMessage(uiState.currentInput)
-            },
-            enabled = !uiState.isLoading
-        )
     }
 }
 
 @Composable
-private fun EmptyStateMessage() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Chat,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+private fun WelcomeMessage() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
         )
-        Spacer(modifier = Modifier.height(16.dp))
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "👋 ¡Hola!",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Soy tu asistente financiero personal. Puedo ayudarte con:",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = "• Análisis de tus gastos e ingresos\n• Consejos de ahorro\n• Recomendaciones de inversión\n• Planificación financiera",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickActions(
+    onInvestmentAdvice: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Text(
-            text = "¡Hola! Soy tu asistente financiero",
-            style = MaterialTheme.typography.titleMedium,
+            text = "Acciones rápidas",
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Pregúntame sobre tus finanzas o solicita consejos de inversión",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Button(
+            onClick = onInvestmentAdvice,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Success
+            )
+        ) {
+            Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Consejos de Inversión")
+        }
     }
 }
 
 @Composable
 private fun MessageBubble(message: ChatMessage) {
-    val alignment = if (message.isUser) Alignment.End else Alignment.Start
-    val backgroundColor = when {
-        message.isError -> MaterialTheme.colorScheme.errorContainer
-        message.isUser -> MaterialTheme.colorScheme.primaryContainer
-        else -> MaterialTheme.colorScheme.secondaryContainer
-    }
-    val textColor = when {
-        message.isError -> MaterialTheme.colorScheme.onErrorContainer
-        message.isUser -> MaterialTheme.colorScheme.onPrimaryContainer
-        else -> MaterialTheme.colorScheme.onSecondaryContainer
-    }
-
-    Column(
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = alignment
+        horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
     ) {
         Card(
             modifier = Modifier.widthIn(max = 280.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = when {
+                    message.isError -> Error.copy(alpha = 0.1f)
+                    message.isUser -> MaterialTheme.colorScheme.primary
+                    else -> MaterialTheme.colorScheme.surfaceVariant
+                }
+            ),
             shape = RoundedCornerShape(
                 topStart = 16.dp,
                 topEnd = 16.dp,
                 bottomStart = if (message.isUser) 16.dp else 4.dp,
                 bottomEnd = if (message.isUser) 4.dp else 16.dp
-            ),
-            colors = CardDefaults.cardColors(
-                containerColor = backgroundColor
             )
         ) {
-            Column(
-                modifier = Modifier.padding(12.dp)
-            ) {
-                Text(
-                    text = message.content,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = textColor
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = formatTimestamp(message.timestamp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = textColor.copy(alpha = 0.7f)
-                )
-            }
+            Text(
+                text = message.content,
+                modifier = Modifier.padding(12.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (message.isUser)
+                    MaterialTheme.colorScheme.onPrimary
+                else if (message.isError)
+                    Error
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -209,41 +224,41 @@ private fun LoadingIndicator() {
         horizontalArrangement = Arrangement.Start
     ) {
         Card(
-            modifier = Modifier.widthIn(max = 100.dp),
-            shape = RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-            )
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            ),
+            shape = RoundedCornerShape(16.dp)
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                repeat(3) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                shape = RoundedCornerShape(50)
-                            )
-                    )
-                }
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp
+                )
+                Text(
+                    text = "Pensando...",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }
 }
 
 @Composable
-private fun MessageInputField(
+private fun MessageInput(
     value: String,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
-    enabled: Boolean
+    isSending: Boolean,
+    modifier: Modifier = Modifier
 ) {
+    val isEnabled = !isSending && value.isNotBlank()
+
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.Bottom
     ) {
@@ -251,26 +266,14 @@ private fun MessageInputField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.weight(1f),
-            placeholder = { Text("Escribe tu mensaje...") },
-            enabled = enabled,
-            maxLines = 4,
-            shape = RoundedCornerShape(24.dp)
+            placeholder = { Text("Escribe tu pregunta...") },
+            enabled = !isSending,
+            maxLines = 4
         )
-        
-        FilledIconButton(
-            onClick = onSend,
-            enabled = enabled && value.isNotBlank(),
-            modifier = Modifier.size(56.dp)
+        FloatingActionButton(
+            onClick = { if (isEnabled) onSend() }
         ) {
-            Icon(
-                imageVector = Icons.Default.Send,
-                contentDescription = "Enviar"
-            )
+            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Enviar")
         }
     }
-}
-
-private fun formatTimestamp(timestamp: Long): String {
-    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-    return sdf.format(Date(timestamp))
 }

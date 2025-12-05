@@ -25,13 +25,8 @@ fun SettingsScreen(
     val context = LocalContext.current
 
     // Handle export success
-    LaunchedEffect(uiState.exportedFile) {
-        uiState.exportedFile?.let { file ->
-            val uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.provider",
-                file
-            )
+    LaunchedEffect(uiState.exportedUri) {
+        uiState.exportedUri?.let { uri ->
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 putExtra(Intent.EXTRA_STREAM, uri)

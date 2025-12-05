@@ -35,7 +35,8 @@ fun NavGraph(
             StatsScreen(navController = navController)
         }
         composable(Screen.Chat.route) {
-            ChatScreen(navController = navController)
+            // ChatScreen ya no necesita navController directamente
+            ChatScreen()
         }
         composable(Screen.Settings.route) {
             SettingsScreen(navController = navController)

@@ -23,26 +23,27 @@ class RagEngine @Inject constructor(
         }
 
         val totalIncome = transactions
-            .filter { it.type == "INCOME" }
+            .filter {it.type == TransactionType.INCOME }
             .sumOf { it.amount }
         
         val totalExpense = transactions
-            .filter { it.type == "EXPENSE" }
+            .filter { it.type == TransactionType.EXPENSE }
             .sumOf { it.amount }
         
         val balance = totalIncome - totalExpense
         
         // Get recent transactions
         val recentTransactions = transactions.take(10)
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val transactionsSummary = recentTransactions.joinToString("\n") { tx ->
-            val date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(tx.date))
-            val type = if (tx.type == "INCOME") "Ingreso" else "Gasto"
+            val date = dateFormat.format(Date(tx.date))
+            val type = if (tx.type == TransactionType.INCOME) "Ingreso" else "Gasto"
             "- $date: $type de S/ ${tx.amount} - ${tx.description}"
         }
         
         // Calculate spending by category (simplified)
         val expensesByDescription = transactions
-            .filter { it.type == "EXPENSE" }
+            .filter { it.type == TransactionType.EXPENSE }
             .groupBy { it.description }
             .mapValues { it.value.sumOf { tx -> tx.amount } }
             .entries
@@ -73,10 +74,10 @@ class RagEngine @Inject constructor(
     suspend fun getInvestmentContext(): String {
         val transactions = transactionRepository.getAllTransactions().first()
         val totalIncome = transactions
-            .filter { it.type == "INCOME" }
+            .filter { it.type == TransactionType.INCOME }
             .sumOf { it.amount }
         val totalExpense = transactions
-            .filter { it.type == "EXPENSE" }
+            .filter { it.type == TransactionType.EXPENSE }
             .sumOf { it.amount }
         val balance = totalIncome - totalExpense
         

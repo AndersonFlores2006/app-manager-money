@@ -5,6 +5,7 @@ import com.example.gestor_money.data.repository.TransactionRepository
 import com.example.gestor_money.domain.model.FinancialSummary
 import com.example.gestor_money.domain.model.Transaction
 import com.example.gestor_money.domain.model.TransactionType
+import com.example.gestor_money.presentation.screens.transactions.viewmodel.TransactionItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
@@ -33,14 +34,16 @@ class GetFinancialSummaryUseCase @Inject constructor(
         }
     }
     
-    private fun TransactionEntity.toDomain(): Transaction {
+    private fun TransactionItem.toDomain(): Transaction {
         return Transaction(
             id = id,
             amount = amount,
             date = date,
             description = description,
-            categoryId = categoryId,
-            type = if (type == "INCOME") TransactionType.INCOME else TransactionType.EXPENSE
+            categoryId = null, // TransactionItem doesn't have category info
+            categoryName = null,
+            categoryIcon = null,
+            type = type
         )
     }
 }

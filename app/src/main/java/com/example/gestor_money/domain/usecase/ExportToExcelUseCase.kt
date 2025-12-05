@@ -1,7 +1,13 @@
 package com.example.gestor_money.domain.usecase
 
+import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import com.example.gestor_money.data.repository.TransactionRepository
+import com.example.gestor_money.domain.model.TransactionType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import org.apache.poi.ss.usermodel.*
@@ -16,7 +22,7 @@ class ExportToExcelUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
     private val transactionRepository: TransactionRepository
 ) {
-    suspend operator fun invoke(): Result<File> {
+    suspend operator fun invoke(): Result<Uri> {
         return try {
             val transactions = transactionRepository.getAllTransactions().first()
             
@@ -47,7 +53,7 @@ class ExportToExcelUseCase @Inject constructor(
             transactions.forEachIndexed { index, transaction ->
                 val row = sheet.createRow(index + 1)
                 row.createCell(0).setCellValue(dateFormat.format(Date(transaction.date)))
-                row.createCell(1).setCellValue(if (transaction.type == "INCOME") "Ingreso" else "Gasto")
+                row.createCell(1).setCellValue(if (transaction.type == TransactionType.INCOME) "Ingreso" else "Gasto")
                 row.createCell(2).setCellValue(transaction.description)
                 row.createCell(3).setCellValue(transaction.amount)
             }
@@ -57,13 +63,46 @@ class ExportToExcelUseCase @Inject constructor(
             
             // Save file
             val fileName = "transacciones_${System.currentTimeMillis()}.xlsx"
-            val file = File(context.getExternalFilesDir(null), fileName)
-            FileOutputStream(file).use { outputStream ->
-                workbook.write(outputStream)
+            val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Use MediaStore for API 29+
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+                    put(MediaStore.Downloads.MIME_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    put(MediaStore.Downloads.IS_PENDING, 1)
+                }
+                val resolver = context.contentResolver
+                val insertUri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                insertUri?.let { uri ->
+                    try {
+                        resolver.openOutputStream(uri)?.use { outputStream ->
+                            workbook.write(outputStream)
+                        }
+                        contentValues.clear()
+                        contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
+                        resolver.update(uri, contentValues, null, null)
+                        uri
+                    } catch (e: Exception) {
+                        resolver.delete(uri, null, null)
+                        throw e
+                    }
+                } ?: throw Exception("No se pudo crear el archivo en Downloads")
+            } else {
+                // Use legacy method for older APIs
+                val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val file = File(dir, fileName)
+                FileOutputStream(file).use { outputStream ->
+                    workbook.write(outputStream)
+                }
+                Uri.fromFile(file)
             }
-            workbook.close()
-            
-            Result.success(file)
+
+            try {
+                Result.success(uri)
+            } catch (e: Exception) {
+                Result.failure(e)
+            } finally {
+                workbook.close()
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

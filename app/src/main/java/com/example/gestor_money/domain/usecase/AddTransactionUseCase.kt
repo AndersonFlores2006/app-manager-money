@@ -17,7 +17,7 @@ class AddTransactionUseCase @Inject constructor(
                 categoryId = transaction.categoryId,
                 type = transaction.type.name
             )
-            val id = transactionRepository.insertTransaction(entity)
+            val id = transactionRepository.addTransaction(entity)
             Result.success(id)
         } catch (e: Exception) {
             Result.failure(e)

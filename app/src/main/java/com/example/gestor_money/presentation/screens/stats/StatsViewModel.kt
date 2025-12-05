@@ -32,8 +32,8 @@ class StatsViewModel @Inject constructor(
                 }
 
                 // Calculate stats
-                val expenses = transactions.filter { it.type == "EXPENSE" }
-                val incomes = transactions.filter { it.type == "INCOME" }
+                val expenses = transactions.filter { it.type == TransactionType.EXPENSE }
+                val incomes = transactions.filter { it.type == TransactionType.INCOME }
 
                 // Group by category (using description as category for now)
                 val expensesByCategory = expenses
