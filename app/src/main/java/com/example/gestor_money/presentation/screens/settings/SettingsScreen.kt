@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.gestor_money.BuildConfig
 import com.example.gestor_money.presentation.screens.auth.AuthViewModel
+import com.example.gestor_money.presentation.screens.updates.UpdateDialog
 import java.io.File
 
 @Composable
@@ -28,6 +29,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var showUpdateDialog by remember { mutableStateOf(false) }
 
     val createDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/pdf")
@@ -189,6 +191,39 @@ fun SettingsScreen(
             }
         }
 
+        // Updates Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Actualizaciones",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "Verifica e instala nuevas versiones automáticamente",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Button(
+                    onClick = { showUpdateDialog = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.CloudDownload, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Verificar actualizaciones")
+                }
+            }
+        }
+
         // About Section
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -225,6 +260,12 @@ fun SettingsScreen(
                 )
             }
         }
+    }
+
+    if (showUpdateDialog) {
+        UpdateDialog(
+            onDismiss = { showUpdateDialog = false }
+        )
     }
 }
 
