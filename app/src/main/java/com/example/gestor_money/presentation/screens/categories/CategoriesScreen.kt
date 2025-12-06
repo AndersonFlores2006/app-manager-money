@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -40,6 +41,7 @@ fun CategoriesScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val showAddDialog by viewModel.showAddDialog.collectAsState()
     val editingCategory by viewModel.editingCategory.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Log.d("CategoriesScreen", "Categories loaded: ${categories.size}, isLoading: $isLoading")
 
@@ -77,6 +79,39 @@ fun CategoriesScreen(
                         onDeleteCategory = { viewModel.deleteCategory(it) },
                         onEditCategory = { viewModel.showEditCategoryDialog(it) }
                     )
+                }
+            }
+
+            // Error Message
+            error?.let { errorMessage ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        IconButton(onClick = { viewModel.clearError() }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Cerrar error",
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
                 }
             }
 

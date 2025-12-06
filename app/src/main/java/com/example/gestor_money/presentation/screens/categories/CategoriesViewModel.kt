@@ -29,6 +29,11 @@ class CategoriesViewModel @Inject constructor(
     private val _editingCategory = MutableStateFlow<CategoryEntity?>(null)
     val editingCategory: StateFlow<CategoryEntity?> = _editingCategory.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    private var _defaultCategoriesCreated = false
+
     init {
         Log.d("CategoriesViewModel", "Initializing CategoriesViewModel")
         loadCategories()
@@ -58,8 +63,6 @@ class CategoriesViewModel @Inject constructor(
             }
         }
     }
-    
-    private var _defaultCategoriesCreated = false
 
     fun showAddCategoryDialog() {
         _showAddDialog.value = true
@@ -77,21 +80,44 @@ class CategoriesViewModel @Inject constructor(
         _editingCategory.value = null
     }
 
+    fun clearError() {
+        _error.value = null
+    }
+
     fun addCategory(name: String, icon: String, color: Int, type: String) {
         Log.d("CategoriesViewModel", "Adding category: $name, type: $type")
+        
+        // Validaciones
+        if (name.isBlank()) {
+            _error.value = "El nombre de la categoría es requerido"
+            return
+        }
+        
+        if (icon.isBlank()) {
+            _error.value = "Debes seleccionar un icono"
+            return
+        }
+        
         viewModelScope.launch {
             try {
+                _error.value = null // Limpiar errores previos
+                
                 val category = CategoryEntity(
-                    name = name,
+                    name = name.trim(),
                     icon = icon,
                     color = color,
-                    type = type
+                    type = type,
+                    lastModified = System.currentTimeMillis()
                 )
+                
                 val id = categoryRepository.insertCategory(category)
                 Log.d("CategoriesViewModel", "Category added with id: $id")
                 hideAddCategoryDialog()
+                _error.value = null // Limpiar errores en caso de éxito
+                
             } catch (e: Exception) {
                 Log.e("CategoriesViewModel", "Error adding category", e)
+                _error.value = "Error al crear la categoría: ${e.message}"
             }
         }
     }

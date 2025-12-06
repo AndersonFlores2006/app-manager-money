@@ -127,7 +127,11 @@ class UpdateViewModel @Inject constructor(
                 result.onSuccess { apkPath ->
                     Log.d("UpdateViewModel", "Download successful, installing APK from: $apkPath")
                     installAPK(context, apkPath)
-                    _uiState.value = _uiState.value.copy(isDownloading = false)
+                    _uiState.value = _uiState.value.copy(
+                        isDownloading = false,
+                        updateAvailable = false, // Reset update status after download
+                        apkDownloadUrl = ""
+                    )
                 }.onFailure { error ->
                     Log.e("UpdateViewModel", "Download failed: ${error.message}")
                     _uiState.value = _uiState.value.copy(
@@ -190,5 +194,15 @@ class UpdateViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+    
+    /**
+     * Limpia el estado de actualizaciones y fuerza una nueva verificación
+     * Útil después de instalar una actualización
+     */
+    fun resetUpdateState() {
+        val currentVersion = getCurrentVersion()
+        _uiState.value = UpdateUiState(currentVersion = currentVersion)
+        Log.d("UpdateViewModel", "Update state reset, current version: $currentVersion")
     }
 }
