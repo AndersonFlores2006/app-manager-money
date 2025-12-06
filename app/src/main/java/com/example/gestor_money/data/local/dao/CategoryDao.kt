@@ -35,4 +35,7 @@ interface CategoryDao {
 
     @Query("UPDATE categories SET cloudId = :cloudId, syncStatus = 'SYNCED', lastModified = :timestamp WHERE id = :id")
     suspend fun updateCloudId(id: Long, cloudId: String, timestamp: Long = System.currentTimeMillis())
+
+    @Query("SELECT * FROM categories WHERE userId = :userId")
+    suspend fun getAllCategoriesSync(userId: String): List<CategoryEntity>
 }

@@ -1,6 +1,7 @@
 package com.example.gestor_money.data.repository
 
 import com.example.gestor_money.data.local.dao.TransactionDao
+import com.example.gestor_money.data.local.dao.TransactionWithCategory
 import com.example.gestor_money.data.local.entities.TransactionEntity
 import com.example.gestor_money.data.sync.EntityType
 import com.example.gestor_money.data.sync.SyncManager
@@ -22,8 +23,8 @@ class TransactionRepository @Inject constructor(
     private fun getUserId(): String = authRepository.getCurrentUserId() ?: "local_user"
 
     fun getAllTransactions(): Flow<List<TransactionItem>> {
-        return transactionDao.getAllTransactions(getUserId()).map {
-            it.map { entity -> entity.toTransactionItem() }
+        return transactionDao.getAllTransactionsWithCategories(getUserId()).map {
+            it.map { transactionWithCategory -> transactionWithCategory.toTransactionItem() }
         }
     }
 
@@ -82,5 +83,18 @@ fun TransactionEntity.toTransactionItem(): TransactionItem {
         amount = this.amount,
         type = TransactionType.valueOf(this.type),
         date = this.date
+    )
+}
+
+// Extension function para mapear de TransactionWithCategory a TransactionItem
+fun TransactionWithCategory.toTransactionItem(): TransactionItem {
+    return TransactionItem(
+        id = this.id,
+        description = this.description,
+        amount = this.amount,
+        type = TransactionType.valueOf(this.type),
+        date = this.date,
+        categoryName = this.categoryName,
+        categoryIcon = this.categoryIcon
     )
 }

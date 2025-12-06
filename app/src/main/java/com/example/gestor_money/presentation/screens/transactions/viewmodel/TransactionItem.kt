@@ -7,5 +7,7 @@ data class TransactionItem(
     val description: String,
     val amount: Double,
     val type: TransactionType,
-    val date: Long
+    val date: Long,
+    val categoryName: String? = null,
+    val categoryIcon: String? = null
 )

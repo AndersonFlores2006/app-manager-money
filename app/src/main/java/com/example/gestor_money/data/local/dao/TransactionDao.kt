@@ -14,6 +14,15 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE userId = :userId ORDER BY date DESC")
     fun getAllTransactions(userId: String): Flow<List<TransactionEntity>>
 
+    @Query("""
+        SELECT t.*, c.name as categoryName, c.icon as categoryIcon
+        FROM transactions t
+        LEFT JOIN categories c ON t.categoryId = c.id
+        WHERE t.userId = :userId
+        ORDER BY t.date DESC
+    """)
+    fun getAllTransactionsWithCategories(userId: String): Flow<List<TransactionWithCategory>>
+
     @Query("SELECT * FROM transactions WHERE userId = :userId AND date BETWEEN :startDate AND :endDate ORDER BY date DESC")
     fun getTransactionsByDateRange(userId: String, startDate: Long, endDate: Long): Flow<List<TransactionEntity>>
 
@@ -45,3 +54,18 @@ interface TransactionDao {
     @Query("UPDATE transactions SET cloudId = :cloudId, syncStatus = 'SYNCED', lastModified = :timestamp WHERE id = :id")
     suspend fun updateCloudId(id: Long, cloudId: String, timestamp: Long = System.currentTimeMillis())
 }
+
+data class TransactionWithCategory(
+    val id: Long,
+    val description: String,
+    val amount: Double,
+    val type: String,
+    val date: Long,
+    val categoryId: Long?,
+    val userId: String,
+    val cloudId: String?,
+    val syncStatus: String,
+    val lastModified: Long,
+    val categoryName: String?,
+    val categoryIcon: String?
+)

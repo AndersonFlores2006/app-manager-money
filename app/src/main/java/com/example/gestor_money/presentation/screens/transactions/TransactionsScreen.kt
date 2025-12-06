@@ -138,16 +138,24 @@ fun TransactionItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Izquierda: Descripción, Fecha, Tipo
+            // Izquierda: Descripción, Fecha, Tipo, Categoría
             Column(horizontalAlignment = Alignment.Start) {
                 Text(text = transaction.description, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(text = formatDate(transaction.date), style = MaterialTheme.typography.bodySmall)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = if (transaction.type == TransactionType.INCOME) "Ingreso" else "Gasto",
-                    style = MaterialTheme.typography.labelSmall
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (transaction.type == TransactionType.INCOME) "Ingreso" else "Gasto",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                    if (transaction.categoryName != null) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = transaction.categoryIcon ?: "📁", style = MaterialTheme.typography.labelSmall)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = transaction.categoryName!!, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
             }
 
             // Derecha: Monto y Botón de Eliminar

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gestor_money.data.repository.AuthRepository
 import com.example.gestor_money.data.repository.AuthResult
+import com.example.gestor_money.data.repository.CategoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,8 @@ data class AuthUiState(
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -96,6 +98,37 @@ class AuthViewModel @Inject constructor(
 
             when (val result = authRepository.signUp(email, password)) {
                 is AuthResult.Success -> {
+                    // Create default categories for new user
+                    launch {
+                        categoryRepository.createDefaultCategories()
+                    }
+                    // AuthState listener will update isAuthenticated, just clear loading/error
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = null
+                    )
+                }
+
+                is AuthResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = result.message
+                    )
+                }
+            }
+        }
+    }
+
+    fun signInAnonymously() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+            when (val result = authRepository.signInAnonymously()) {
+                is AuthResult.Success -> {
+                    // Create default categories for anonymous user
+                    launch {
+                        categoryRepository.createDefaultCategories()
+                    }
                     // AuthState listener will update isAuthenticated, just clear loading/error
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
