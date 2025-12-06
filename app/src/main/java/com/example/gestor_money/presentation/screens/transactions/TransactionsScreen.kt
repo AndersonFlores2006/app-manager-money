@@ -1,6 +1,16 @@
 package com.example.gestor_money.presentation.screens.transactions
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -52,24 +63,35 @@ fun TransactionsScreen(
         ) {
             if (transactions.isEmpty()) {
                 item {
-                    Column(
-                        modifier = Modifier
-                            .fillParentMaxHeight(0.8f)
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn() + slideInVertically(initialOffsetY = { 50 })
                     ) {
-                        Text("Aún no hay transacciones", style = MaterialTheme.typography.bodyLarge)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("¡Agrega tu primera transacción!", style = MaterialTheme.typography.bodyMedium)
+                        Column(
+                            modifier = Modifier
+                                .fillParentMaxHeight(0.8f)
+                                .fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text("Aún no hay transacciones", style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("¡Agrega tu primera transacción!", style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
                 }
             } else {
                 items(transactions) { transaction ->
-                    TransactionItem(
-                        transaction = transaction,
-                        onDelete = { viewModel.deleteTransaction(transaction.id) }
-                    )
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn() + slideInVertically(initialOffsetY = { 50 }),
+                        exit = fadeOut() + slideOutVertically(targetOffsetY = { -50 })
+                    ) {
+                        TransactionItem(
+                            transaction = transaction,
+                            onDelete = { viewModel.deleteTransaction(transaction.id) }
+                        )
+                    }
                 }
             }
         }
@@ -86,10 +108,22 @@ fun TransactionItem(
     transaction: TransactionItem,
     onDelete: (Long) -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "card_scale"
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Navegar a pantalla de detalle/edición */ },
+            .scale(scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) { /* Navegar a pantalla de detalle/edición */ },
         colors = CardDefaults.cardColors(
             containerColor = when (transaction.type) {
                 TransactionType.INCOME -> MaterialTheme.colorScheme.primaryContainer
@@ -124,9 +158,20 @@ fun TransactionItem(
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+                val deleteInteractionSource = remember { MutableInteractionSource() }
+                val isDeletePressed by deleteInteractionSource.collectIsPressedAsState()
+                val deleteScale by animateFloatAsState(
+                    targetValue = if (isDeletePressed) 0.8f else 1f,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                    label = "delete_scale"
+                )
+
                 IconButton(
                     onClick = { onDelete(transaction.id) },
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .scale(deleteScale),
+                    interactionSource = deleteInteractionSource
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = "Eliminar transacción")
                 }
