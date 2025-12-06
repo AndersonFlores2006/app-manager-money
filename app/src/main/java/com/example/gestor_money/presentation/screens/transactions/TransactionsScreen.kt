@@ -138,9 +138,17 @@ fun TransactionItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Izquierda: Descripción, Fecha, Tipo, Categoría
-            Column(horizontalAlignment = Alignment.Start) {
-                Text(text = transaction.description, fontWeight = FontWeight.Bold)
+            // Izquierda: Descripción, Fecha, Tipo, Categoría (con peso para limitar ancho)
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = transaction.description,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(text = formatDate(transaction.date), style = MaterialTheme.typography.bodySmall)
                 Spacer(modifier = Modifier.height(4.dp))
@@ -153,12 +161,19 @@ fun TransactionItem(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(text = transaction.categoryIcon ?: "📁", style = MaterialTheme.typography.labelSmall)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = transaction.categoryName!!, style = MaterialTheme.typography.labelSmall)
+                        Text(
+                            text = transaction.categoryName!!,
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
                     }
                 }
             }
 
-            // Derecha: Monto y Botón de Eliminar
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Derecha: Monto y Botón de Eliminar (ancho fijo)
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = NumberFormat.getCurrencyInstance(Locale("es", "PE")).format(transaction.amount),

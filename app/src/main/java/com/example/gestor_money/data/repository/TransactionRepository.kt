@@ -7,8 +7,12 @@ import com.example.gestor_money.data.sync.EntityType
 import com.example.gestor_money.data.sync.SyncManager
 import com.example.gestor_money.domain.model.TransactionType
 import com.example.gestor_money.presentation.screens.transactions.viewmodel.TransactionItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,11 +37,20 @@ class TransactionRepository @Inject constructor(
         val transactionWithUser = transaction.copy(userId = userId)
         val id = transactionDao.insertTransaction(transactionWithUser)
         
-        // Sync with Firestore
-        firestoreRepository.syncTransaction(userId, transactionWithUser)
-            .onSuccess { cloudId ->
-                transactionDao.updateCloudId(id, cloudId)
+        // Sync with Firestore in background (non-blocking)
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                withTimeout(5000L) {
+                    firestoreRepository.syncTransaction(userId, transactionWithUser.copy(id = id))
+                        .onSuccess { cloudId ->
+                            transactionDao.updateCloudId(id, cloudId)
+                        }
+                }
+            } catch (e: Exception) {
+                // Log error but don't block the main operation
+                android.util.Log.w("TransactionRepository", "Firestore sync failed, will retry later: ${e.message}")
             }
+        }
         
         syncManager.markForUpload(id, EntityType.TRANSACTION)
         return id

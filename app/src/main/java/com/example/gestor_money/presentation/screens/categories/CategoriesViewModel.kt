@@ -42,26 +42,24 @@ class CategoriesViewModel @Inject constructor(
                 categoryRepository.getAllCategories().collect { categories ->
                     Log.d("CategoriesViewModel", "Categories loaded: ${categories.size}")
                     _categories.value = categories
+                    _isLoading.value = false
 
-                    // If no categories, create default ones
-                    if (categories.isEmpty()) {
+                    // If no categories, create default ones (only once)
+                    if (categories.isEmpty() && !_defaultCategoriesCreated) {
+                        _defaultCategoriesCreated = true
                         Log.d("CategoriesViewModel", "No categories found, creating default categories")
                         categoryRepository.createDefaultCategories()
-                        // Reload after creating defaults
-                        categoryRepository.getAllCategories().collect { updatedCategories ->
-                            Log.d("CategoriesViewModel", "Default categories created, now: ${updatedCategories.size}")
-                            _categories.value = updatedCategories
-                        }
+                        // The flow will automatically emit the new categories
                     }
                 }
             } catch (e: Exception) {
                 Log.e("CategoriesViewModel", "Error loading categories", e)
-            } finally {
-                Log.d("CategoriesViewModel", "Finished loading categories")
                 _isLoading.value = false
             }
         }
     }
+    
+    private var _defaultCategoriesCreated = false
 
     fun showAddCategoryDialog() {
         _showAddDialog.value = true

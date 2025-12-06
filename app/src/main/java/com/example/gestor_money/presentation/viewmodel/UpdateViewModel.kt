@@ -58,23 +58,35 @@ class UpdateViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isChecking = true, error = null)
             
+            // Obtener la versión actual del dispositivo (no la cacheada)
+            val actualCurrentVersion = getCurrentVersion()
+            
             updateRepository.getLatestRelease().onSuccess { release ->
                 val latestVersion = release.tag_name.removePrefix("v")
 
-                val updateAvailable = compareVersions(latestVersion, currentVersion) > 0
+                // Comparar con la versión actual real del dispositivo
+                val versionComparison = compareVersions(latestVersion, actualCurrentVersion)
+                val updateAvailable = versionComparison > 0
+                
+                Log.d("UpdateViewModel", "Current version: $actualCurrentVersion, Latest version: $latestVersion, Update available: $updateAvailable")
                 
                 // Buscar el APK en los assets
                 val apkAsset = release.assets.find { it.name.endsWith(".apk") }
                 val apkUrl = apkAsset?.browser_download_url ?: ""
 
-                // Only show update as available if there's an APK to download
+                // Only show update as available if there's an APK to download AND version is newer
                 val updateAvailableWithApk = updateAvailable && apkUrl.isNotEmpty()
 
                 _uiState.value = _uiState.value.copy(
                     isChecking = false,
                     updateAvailable = updateAvailableWithApk,
+                    currentVersion = actualCurrentVersion,
                     latestVersion = latestVersion,
-                    changeLog = release.body ?: "Sin cambios reportados",
+                    changeLog = if (updateAvailableWithApk) {
+                        release.body ?: "Sin cambios reportados"
+                    } else {
+                        "Tu aplicación está actualizada (v$actualCurrentVersion)"
+                    },
                     apkDownloadUrl = apkUrl
                 )
             }.onFailure { error ->
