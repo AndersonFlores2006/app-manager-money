@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.gestor_money.BuildConfig
+import com.example.gestor_money.presentation.navigation.Screen
 import com.example.gestor_money.presentation.screens.auth.AuthViewModel
 import com.example.gestor_money.presentation.screens.updates.UpdateDialog
 import java.io.File
@@ -71,7 +72,7 @@ fun SettingsScreen(
             fontWeight = FontWeight.Bold
         )
 
-        // Export Section
+        // Data Management Section
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -83,16 +84,20 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Exportar Datos",
+                    text = "Gestión de Datos",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                Text(
-                    text = "Exporta todas tus transacciones a un archivo PDF",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
+
+                Button(
+                    onClick = { navController.navigate(Screen.Categories.route) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Category, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Gestionar Categorías")
+                }
+
                 Button(
                     onClick = { viewModel.exportToExcel() },
                     modifier = Modifier.fillMaxWidth(),

@@ -2,6 +2,8 @@ package com.example.gestor_money.presentation.screens.add_transaction
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gestor_money.data.local.entities.CategoryEntity
+import com.example.gestor_money.data.repository.CategoryRepository
 import com.example.gestor_money.domain.model.Transaction
 import com.example.gestor_money.domain.model.TransactionType
 import com.example.gestor_money.domain.usecase.AddTransactionUseCase
@@ -14,11 +16,27 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddTransactionViewModel @Inject constructor(
-    private val addTransactionUseCase: AddTransactionUseCase
+    private val addTransactionUseCase: AddTransactionUseCase,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddTransactionUiState())
     val uiState: StateFlow<AddTransactionUiState> = _uiState.asStateFlow()
+
+    private val _categories = MutableStateFlow<List<CategoryEntity>>(emptyList())
+    val categories: StateFlow<List<CategoryEntity>> = _categories.asStateFlow()
+
+    init {
+        loadCategories()
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            categoryRepository.getAllCategories().collect { categories ->
+                _categories.value = categories
+            }
+        }
+    }
 
     fun onAmountChange(amount: String) {
         _uiState.value = _uiState.value.copy(amount = amount)
@@ -30,6 +48,10 @@ class AddTransactionViewModel @Inject constructor(
 
     fun onTypeChange(type: TransactionType) {
         _uiState.value = _uiState.value.copy(type = type)
+    }
+
+    fun onCategoryChange(categoryId: Long?) {
+        _uiState.value = _uiState.value.copy(selectedCategoryId = categoryId)
     }
 
     fun saveTransaction(onSuccess: () -> Unit) {
@@ -52,7 +74,7 @@ class AddTransactionViewModel @Inject constructor(
                 amount = state.amount.toDouble(),
                 date = System.currentTimeMillis(),
                 description = state.description,
-                categoryId = null,
+                categoryId = state.selectedCategoryId,
                 type = state.type
             )
             
@@ -76,6 +98,7 @@ data class AddTransactionUiState(
     val amount: String = "",
     val description: String = "",
     val type: TransactionType = TransactionType.EXPENSE,
+    val selectedCategoryId: Long? = null,
     val isLoading: Boolean = false,
     val error: String? = null
 )
