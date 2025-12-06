@@ -2,6 +2,8 @@ package com.example.gestor_money.presentation.viewmodel
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.util.Log
@@ -11,10 +13,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.gestor_money.BuildConfig
 import com.example.gestor_money.domain.repository.UpdateRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 
@@ -33,11 +37,22 @@ data class UpdateUiState(
 
 @HiltViewModel
 class UpdateViewModel @Inject constructor(
-    private val updateRepository: UpdateRepository
+    private val updateRepository: UpdateRepository,
+    private val context: Context
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(UpdateUiState(currentVersion = "1.1.0"))
+    private val currentVersion = getCurrentVersion()
+    private val _uiState = MutableStateFlow(UpdateUiState(currentVersion = currentVersion))
     val uiState: StateFlow<UpdateUiState> = _uiState.asStateFlow()
+
+    private fun getCurrentVersion(): String {
+        return try {
+            val packageInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            packageInfo.versionName ?: "1.0.0"
+        } catch (e: PackageManager.NameNotFoundException) {
+            "1.0.0"
+        }
+    }
 
     fun checkForUpdates() {
         viewModelScope.launch {
@@ -45,8 +60,7 @@ class UpdateViewModel @Inject constructor(
             
             updateRepository.getLatestRelease().onSuccess { release ->
                 val latestVersion = release.tag_name.removePrefix("v")
-                val currentVersion = "1.1.0"
-                
+
                 val updateAvailable = compareVersions(latestVersion, currentVersion) > 0
                 
                 // Buscar el APK en los assets
@@ -87,18 +101,33 @@ class UpdateViewModel @Inject constructor(
 
             _uiState.value = _uiState.value.copy(isDownloading = true)
 
-            updateRepository.downloadAPK(apkUrl) { downloaded, total ->
-                val progress = ((downloaded * 100) / total).toInt()
-                _uiState.value = _uiState.value.copy(downloadProgress = progress)
-            }.onSuccess { apkPath ->
-                Log.d("UpdateViewModel", "Download successful, installing APK from: $apkPath")
-                installAPK(context, apkPath)
-                _uiState.value = _uiState.value.copy(isDownloading = false)
-            }.onFailure { error ->
-                Log.e("UpdateViewModel", "Download failed: ${error.message}")
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    updateRepository.downloadAPK(apkUrl) { downloaded, total ->
+                        val progress = ((downloaded * 100) / total).toInt()
+                        // Update progress on main thread
+                        launch(Dispatchers.Main) {
+                            _uiState.value = _uiState.value.copy(downloadProgress = progress)
+                        }
+                    }
+                }
+
+                result.onSuccess { apkPath ->
+                    Log.d("UpdateViewModel", "Download successful, installing APK from: $apkPath")
+                    installAPK(context, apkPath)
+                    _uiState.value = _uiState.value.copy(isDownloading = false)
+                }.onFailure { error ->
+                    Log.e("UpdateViewModel", "Download failed: ${error.message}")
+                    _uiState.value = _uiState.value.copy(
+                        isDownloading = false,
+                        error = error.message ?: "Error al descargar actualización"
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("UpdateViewModel", "Exception during download: ${e.message}", e)
                 _uiState.value = _uiState.value.copy(
                     isDownloading = false,
-                    error = error.message ?: "Error al descargar actualización"
+                    error = e.message ?: "Error desconocido"
                 )
             }
         }
@@ -109,7 +138,7 @@ class UpdateViewModel @Inject constructor(
         Log.d("UpdateViewModel", "Installing APK from file: ${apkFile.absolutePath}, exists: ${apkFile.exists()}, size: ${apkFile.length()}")
 
         val apkUri: Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apkFile)
+            FileProvider.getUriForFile(context, "${context.packageName}.provider", apkFile)
         } else {
             Uri.fromFile(apkFile)
         }

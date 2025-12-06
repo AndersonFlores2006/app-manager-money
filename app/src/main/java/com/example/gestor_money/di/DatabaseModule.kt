@@ -86,4 +86,10 @@ object DatabaseModule {
     fun provideChatDao(database: AppDatabase): ChatDao {
         return database.chatDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideApplicationContext(@ApplicationContext context: Context): Context {
+        return context
+    }
 }

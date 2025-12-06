@@ -1,5 +1,6 @@
 package com.example.gestor_money.presentation.screens.categories
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -34,10 +35,13 @@ fun CategoriesScreen(
     navController: NavController,
     viewModel: CategoriesViewModel = hiltViewModel()
 ) {
+    Log.d("CategoriesScreen", "CategoriesScreen composable called")
     val categories by viewModel.categories.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val showAddDialog by viewModel.showAddDialog.collectAsState()
     val editingCategory by viewModel.editingCategory.collectAsState()
+
+    Log.d("CategoriesScreen", "Categories loaded: ${categories.size}, isLoading: $isLoading")
 
     Scaffold(
         topBar = {

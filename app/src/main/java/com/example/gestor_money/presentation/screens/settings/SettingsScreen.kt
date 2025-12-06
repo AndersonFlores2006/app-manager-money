@@ -1,6 +1,8 @@
 package com.example.gestor_money.presentation.screens.settings
 
 import android.content.Intent
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,6 +33,15 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showUpdateDialog by remember { mutableStateOf(false) }
+
+    val currentVersion = remember {
+        try {
+            val packageInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            packageInfo.versionName ?: "1.0.0"
+        } catch (e: PackageManager.NameNotFoundException) {
+            "1.0.0"
+        }
+    }
 
     val createDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/pdf")
@@ -249,7 +260,7 @@ fun SettingsScreen(
                 SettingItem(
                     icon = Icons.Default.Info,
                     title = "Versión",
-                    value = "1.0.0"
+                    value = currentVersion
                 )
 
                 SettingItem(
