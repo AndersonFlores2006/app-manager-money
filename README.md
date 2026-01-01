@@ -68,6 +68,49 @@ La aplicación sigue una arquitectura MVVM con Jetpack Compose para la interfaz 
 *   **Data Layer**: Incluye `GeminiRepository.kt` para interactuar con la API de Gemini y Room para el almacenamiento local de transacciones.
 *   **DI (Hilt)**: Hilt se utiliza para la inyección de dependencias, facilitando la gestión de las dependencias entre componentes.
 
+## 📦 Distribución y Firma de APK
+
+Para crear versiones firmadas de la aplicación listas para distribución:
+
+### ✅ Problema de "Conflicto de Paquete" - COMPLETAMENTE RESUELTO
+
+El error **"debido a un conflicto de un paquete"** ya está solucionado. El script automatizado ahora firma correctamente todos los APKs.
+
+Para detalles técnicos: **[SOLUCION_CONFLICTO_PAQUETE.md](SOLUCION_CONFLICTO_PAQUETE.md)**
+
+### Creación Rápida de APK Firmado
+
+#### Opción 1: Script Automatizado (Más Fácil)
+
+```bash
+# Crea keystore, compila, firma y verifica automáticamente
+./build-release.sh
+
+# El script maneja todo el proceso y genera el APK listo para distribuir
+```
+
+#### Opción 2: Comandos Manuales
+
+```bash
+# 1. Crear keystore (solo la primera vez)
+keytool -genkeypair -v -keystore release.keystore -alias gestor-money -keyalg RSA -keysize 2048 -validity 10000 -storepass TU_PASSWORD -keypass TU_PASSWORD -dname "CN=Anderson Flores, OU=Mobile, O=Personal, L=Lima, ST=Lima, C=PE"
+
+# 2. Generar APK de release
+./gradlew assembleRelease
+
+# 3. El APK estará en: app/build/outputs/apk/release/app-release.apk
+```
+
+### Documentación Completa
+
+Para instrucciones detalladas sobre:
+- Creación de keystores
+- Configuración de firma
+- Distribución en GitHub Releases
+- Solución de problemas comunes
+
+Consulta: [**GUÍA_CREAR_FIRMAR_APK.md**](documentation/GUIA_CREAR_FIRMAR_APK.md)
+
 ## Contribuciones
 
 Si deseas contribuir a este proyecto, por favor:

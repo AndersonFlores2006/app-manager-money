@@ -36,27 +36,16 @@ android {
         applicationId = "com.example.gestor_money"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        
+
         // Pasar credenciales desde .env a BuildConfig
         buildConfigField("String", "OLLAMA_API_KEY", "\"${getEnvProperty("OLLAMA_API_KEY")}\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"${getEnvProperty("GEMINI_API_KEY")}\"")
         buildConfigField("String", "OLLAMA_BASE_URL", "\"https://api.ollama.ai/\"")
         buildConfigField("String", "GEMINI_BASE_URL", "\"https://generativelanguage.googleapis.com/\"")
-    }
-
-    signingConfigs {
-        create("release") {
-            if (keystorePropertiesFile.exists()) {
-                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
-                storePassword = keystoreProperties.getProperty("storePassword")
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
-            }
-        }
     }
 
     buildTypes {
@@ -66,16 +55,18 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     kotlinOptions {
         jvmTarget = "17"
     }
+
     buildFeatures {
         compose = true
         buildConfig = true
