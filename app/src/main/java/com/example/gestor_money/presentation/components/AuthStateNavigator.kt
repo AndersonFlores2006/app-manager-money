@@ -14,6 +14,7 @@ import com.example.gestor_money.presentation.screens.auth.AuthUiState
 import com.example.gestor_money.presentation.screens.auth.AuthViewModel
 import com.example.gestor_money.presentation.screens.auth.LoginScreen
 import com.example.gestor_money.presentation.screens.auth.RegisterScreen
+import com.example.gestor_money.presentation.screens.categories.CategoriesScreen
 import com.example.gestor_money.presentation.screens.chat.ChatScreen
 import com.example.gestor_money.presentation.screens.home.HomeScreen
 import com.example.gestor_money.presentation.screens.settings.SettingsScreen
@@ -93,6 +94,9 @@ private fun MainAppNavigator(
         }
         composable(Screen.Transactions.route) {
             TransactionsScreen(navController = navController)
+        }
+        composable(Screen.Categories.route) {
+            CategoriesScreen(navController = navController)
         }
         composable(Screen.Stats.route) {
             StatsScreen(navController = navController)

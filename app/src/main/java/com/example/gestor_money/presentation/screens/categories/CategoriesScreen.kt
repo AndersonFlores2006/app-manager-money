@@ -327,7 +327,7 @@ private fun AddCategoryDialog(
 
                 // TODO: Add icon picker and color picker
                 Text("Icono: $selectedIcon")
-                Text("Color: ${android.graphics.Color.valueOf(selectedColor)}")
+                Text("Color: #${selectedColor.toString(16).padStart(8, '0')}")
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -391,7 +391,7 @@ private fun EditCategoryDialog(
 
                 // TODO: Add icon picker and color picker
                 Text("Icono: $selectedIcon")
-                Text("Color: ${android.graphics.Color.valueOf(selectedColor)}")
+                Text("Color: #${selectedColor.toString(16).padStart(8, '0')}")
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

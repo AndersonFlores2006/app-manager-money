@@ -61,10 +61,39 @@ Se crearon pruebas unitarias para verificar las correcciones:
   - Verificación de disponibilidad de actualizaciones
   - Truncamiento de texto largo
 
+## Bugs Recientemente Corregidos
+
+### Bug 4: Crash al acceder a "Gestionar Categorías" ✅ CORREGIDO
+- **Descripción**: Al hacer clic en "Gestionar Categorías" desde Configuración, la aplicación se cerraba inesperadamente.
+- **Causa raíz**: La ruta de navegación "categories" no estaba registrada en el navegador principal de la app. Había archivos de navegación duplicados/inconsistentes.
+- **Solución implementada**:
+  - Eliminó el archivo `NavGraph.kt` redundante
+  - Agregó la ruta `Screen.Categories.route` al `MainAppNavigator` en `AuthStateNavigator.kt`
+  - Reemplazó `android.graphics.Color.valueOf()` con conversión hexadecimal segura para evitar crashes potenciales
+- **Archivos modificados**:
+  - `app/src/main/java/com/example/gestor_money/presentation/components/AuthStateNavigator.kt`
+  - `app/src/main/java/com/example/gestor_money/presentation/screens/categories/CategoriesScreen.kt`
+  - Eliminado: `app/src/main/java/com/example/gestor_money/presentation/navigation/NavGraph.kt`
+- **Severidad**: Alta (cierre inesperado)
+
+### Bug 5: Aplicación no reconoce versión actualizada tras instalación ✅ CORREGIDO
+- **Descripción**: Después de instalar una actualización desde GitHub Releases, al verificar actualizaciones la app mostraba que había una nueva versión disponible cuando ya estaba actualizada.
+- **Causa raíz**: El sistema PackageManager no actualiza inmediatamente la información de versión después de instalar un APK. La comparación de versiones usaba valores cacheados.
+- **Solución implementada**: Implementó sistema de flags usando SharedPreferences para detectar cuando se instaló una actualización reciente:
+  - Creó `PreferencesManager` para manejar flags de actualización
+  - Modificó `UpdateViewModel.getCurrentVersion()` para verificar cambios de versión después de instalación
+  - Agregó `markUpdateInstalled()` y `clearUpdateFlags()` para controlar el estado
+- **Archivos modificados**:
+  - Creado: `app/src/main/java/com/example/gestor_money/data/local/PreferencesManager.kt`
+  - Modificado: `app/src/main/java/com/example/gestor_money/presentation/viewmodel/UpdateViewModel.kt`
+  - Modificado: `app/src/main/java/com/example/gestor_money/di/DatabaseModule.kt`
+- **Severidad**: Media (confusión para el usuario)
+
 ## Próximos Pasos
 - ~~Priorizar la corrección de bugs de severidad alta.~~ ✅ Completado
 - ~~Implementar mejoras de UI/UX para mejor experiencia del usuario.~~ ✅ Completado
 - ~~Realizar pruebas exhaustivas después de cada corrección.~~ ✅ Completado
+- Probar navegación a categorías y sistema de actualizaciones en dispositivo real
 - Monitorear el comportamiento en producción
 - Recopilar feedback de usuarios sobre las correcciones
 
@@ -72,4 +101,5 @@ Se crearon pruebas unitarias para verificar las correcciones:
 
 | Fecha | Versión | Cambios |
 |-------|---------|---------|
+| 2025-12-31 | 1.1.0 | Corrección de Bug 4 (navegación categorías) y Bug 5 (reconocimiento de versión actualizada) |
 | 2025-12-06 | 1.x.x | Corrección de Bug 1, 2, 3 y Mejora 1 |

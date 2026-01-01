@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.gestor_money.data.local.AppDatabase
+import com.example.gestor_money.data.local.PreferencesManager
 import com.example.gestor_money.data.local.dao.BudgetDao
 import com.example.gestor_money.data.local.dao.CategoryDao
 import com.example.gestor_money.data.local.dao.ChatDao
@@ -91,5 +92,11 @@ object DatabaseModule {
     @Singleton
     fun provideApplicationContext(@ApplicationContext context: Context): Context {
         return context
+    }
+
+    @Provides
+    @Singleton
+    fun providePreferencesManager(@ApplicationContext context: Context): PreferencesManager {
+        return PreferencesManager(context)
     }
 }

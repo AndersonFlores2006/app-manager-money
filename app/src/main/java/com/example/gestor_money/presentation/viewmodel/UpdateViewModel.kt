@@ -11,6 +11,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gestor_money.BuildConfig
+import com.example.gestor_money.data.local.PreferencesManager
 import com.example.gestor_money.domain.repository.UpdateRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +39,8 @@ data class UpdateUiState(
 @HiltViewModel
 class UpdateViewModel @Inject constructor(
     private val updateRepository: UpdateRepository,
-    private val context: Context
+    private val context: Context,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     private val currentVersion = getCurrentVersion()
@@ -48,7 +50,21 @@ class UpdateViewModel @Inject constructor(
     private fun getCurrentVersion(): String {
         return try {
             val packageInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.versionName ?: "1.0.0"
+            val versionName = packageInfo.versionName ?: "1.0.0"
+
+            // Si hay una actualización reciente instalada, verificar si la versión cambió
+            if (preferencesManager.recentUpdateInstalled) {
+                val cachedVersion = preferencesManager.cachedVersion
+                Log.d("UpdateViewModel", "Recent update flag detected. Cached: $cachedVersion, Current: $versionName")
+
+                // Si la versión actual es diferente a la cacheada, limpiar el flag
+                if (versionName != cachedVersion && cachedVersion.isNotEmpty()) {
+                    Log.d("UpdateViewModel", "Version updated successfully! Clearing update flags.")
+                    preferencesManager.clearUpdateFlags()
+                }
+            }
+
+            versionName
         } catch (e: PackageManager.NameNotFoundException) {
             "1.0.0"
         }
@@ -127,6 +143,11 @@ class UpdateViewModel @Inject constructor(
                 result.onSuccess { apkPath ->
                     Log.d("UpdateViewModel", "Download successful, installing APK from: $apkPath")
                     installAPK(context, apkPath)
+
+                    // Marcar que se instaló una actualización
+                    val currentVersion = getCurrentVersion()
+                    preferencesManager.markUpdateInstalled(currentVersion)
+
                     _uiState.value = _uiState.value.copy(
                         isDownloading = false,
                         updateAvailable = false, // Reset update status after download
